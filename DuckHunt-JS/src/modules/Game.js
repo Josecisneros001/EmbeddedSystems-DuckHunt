@@ -619,12 +619,16 @@ class Game {
       this.crosshair.moveTo({ x: random(1), y: random(1)}); // Update crosshair position
       this.renderer.render(this.stage);
 
-      // Function to check the variable and perform the action
-      checkVariableAndHandleClick() {
-        if (this.variable) {
-          this.handleClick(event);
-        }
+      // Changed this
+      if (button === 1) {
+        const simulatedEvent = { 
+          // No se que poner aquí jajaja
+         };
+        handleClick(simulatedEvent);
       }
+
+      // Create a new click event
+      // const clickEvent = new Event('click');
 
       if (this.shouldWaveEnd()) {
         this.endWave();

@@ -6,7 +6,6 @@ import sound from './Sound';
 import levelCreator from '../libs/levelCreator.js';
 import utils from '../libs/utils';
 import Crosshair from './Crosshair';
-import { random } from 'lodash';
 
 
 const BLUE_SKY_COLOR = 0x64b0ff;
@@ -42,6 +41,40 @@ class Game {
     this.waveEnding = false;
     this.quackingSoundId = null;
     this.levels = levels.normal;
+
+    let ip = "192.168.1.51:81";
+    this.last_x = 0.0;
+    this.last_y = 0.0;
+    this.last_btn = 0;
+    this.btn_changed = false;
+    this.test = new WebSocket("ws://" + ip);
+    this.connected = false;
+    this.test.onopen = (event) => {
+      console.log("Connected to " + ip);
+      this.connected = true;
+    };
+    this.test.onclose = (event) => {
+      console.log("Disconnected from " + ip);
+      this.connected = false;
+    };
+    let test = this.test;
+    setInterval(() => {
+      if (this.connected) {
+        test.send("data");
+      }
+    }, 100);
+    this.test.onmessage =   (event) => {
+      var data = event.data.split(",");
+      console.log(data);
+      this.last_x = 1 - parseFloat(data[0]);
+      this.last_y = 1 - parseFloat(data[1]);
+      if (parseInt(data[2]) != this.last_btn) {
+        this.btn_changed = true;
+      }
+      this.last_btn = parseInt(data[2]);
+    };
+    this.startTime = Date.now();
+
     return this;
   }
 
@@ -568,9 +601,6 @@ class Game {
 
   handleClick(event) {
     const clickPoint = {
-      // TODO: Change to the position given by the sensor
-      // x: 50,
-      // y: 50
       x: event.data.global.x,
       y: event.data.global.y
     };
@@ -616,15 +646,27 @@ class Game {
   animate() {
     if (!this.paused) {
       // Changed this
-      this.crosshair.moveTo({ x: random(1), y: random(1)}); // Update crosshair position
+
+      // Get Sensor Data 
+      let local_x = this.last_x;
+      let local_y = this.last_y;
+      let local_btn = this.last_btn;
+
+      this.crosshair.moveTo({ x: local_x, y: local_y}); // Update crosshair position
       this.renderer.render(this.stage);
 
       // Changed this
-      if (button === 1) {
+      if (local_btn && this.btn_changed) {
+        this.btn_changed = false;
         const simulatedEvent = { 
-          // No se que poner aquí jajaja
-         };
-        handleClick(simulatedEvent);
+          "data": {
+            "global": {
+              "x": parseInt(local_x * window.innerWidth),
+              "y": parseInt(local_y * window.innerHeight)
+            }
+          }
+        };
+        this.handleClick(simulatedEvent);
       }
 
       // Create a new click event

@@ -42,7 +42,7 @@ class Game {
     this.quackingSoundId = null;
     this.levels = levels.normal;
 
-    let ip = "192.168.1.51:81";
+    let ip = "192.168.199.153:81";
     this.last_x = 0.0;
     this.last_y = 0.0;
     this.last_btn = 0;
